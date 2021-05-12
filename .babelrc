@@ -1,4 +1,4 @@
 {
-  "plugins": ["transform-runtime"],
-  "presets": ["es2015", "stage-0"]
+  "plugins": ["@babel/transform-runtime"],
+  "presets": ["@babel/preset-env"]
 }

@@ -1,11 +1,14 @@
 import gulp from 'gulp';
 import webpack from 'webpack';
+import "core-js/stable";
+import "regenerator-runtime/runtime";
 import path from 'path';
-import gutil from 'gulp-util';
+import log from 'fancy-log';
 import serve from 'browser-sync';
+import pluginError from 'plugin-error';
 import del from 'del';
 import webpackDevMiddelware from 'webpack-dev-middleware';
-import webpachHotMiddelware from 'webpack-hot-middleware';
+import webpackHotMiddelware from 'webpack-hot-middleware';
 import colorsSupported from 'supports-color';
 import historyApiFallback from 'connect-history-api-fallback';
 
@@ -16,7 +19,7 @@ const root = 'client';
 // map of all paths
 const paths = {
   entry: [
-    'babel-polyfill',
+    'core-js',
     path.join(__dirname, root, 'app/app.js')
   ],
 };
@@ -28,9 +31,9 @@ gulp.task('build', cb => {
 
   webpack(config, (err, stats) => {
     if(err) {
-      throw new gutil.PluginError('webpack', err);
+      throw new pluginError('webpack', err);
     }
-    gutil.log('[webpack]', stats.toString({
+    log('[webpack]', stats.toString({
       colors: colorsSupported,
       chunks: false,
       errorDetails: false
@@ -42,7 +45,7 @@ gulp.task('build', cb => {
 
 gulp.task('serve', () => {
   const config = require('./webpack.dev.config');
-  config.entry.app = [
+  config.entry = [
     'webpack-hot-middleware/client',
   ].concat(paths.entry);
 
@@ -62,16 +65,17 @@ gulp.task('serve', () => {
         },
         publicPath: config.output.publicPath
       }),
-      webpachHotMiddelware(compiler)
+      webpackHotMiddelware(compiler)
     ]
   });
 });
 
 gulp.task('clean', (cb) => {
   del([paths.dest]).then(function (paths) {
-    gutil.log("[clean]", paths);
+    log("[clean]", paths);
     cb();
   });
 });
 
-gulp.task('default', ['serve']);
+gulp.task('default', gulp.series('serve'));
+

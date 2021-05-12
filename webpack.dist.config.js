@@ -1,10 +1,12 @@
 const webpack = require('webpack');
 const path = require('path');
 const config = require('./webpack.config');
-const ExtractTextPlugin = require('extract-text-webpack-plugin');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 const {findIndex} = require('lodash');
-const gutil = require('gulp-util');
-const printError = err => gutil.log(gutil.colors.bgRed(gutil.colors.white(err)));
+const log = require('fancy-log');
+const chalk = require('chalk');
+const printError = err => log(chalk.bgRed(chalk.white(err)));
 
 if(process.env.NODE_ENV && !['production', 'prototype'].includes(process.env.NODE_ENV)) {
   printError(`You're trying to build for '${process.env.NODE_ENV}' but building is meant for production environment`);
@@ -15,54 +17,49 @@ const environment = require('./config')(process.env.NODE_ENV || 'production');
 config.output = {
   filename: '[name].bundle.js',
   publicPath: '',
-  path: path.resolve(__dirname, 'dist')
+  path: path.resolve(__dirname, './dist')
 };
 
 const extractCssPropIndex = findIndex(config.module.rules, {test: /\.scss$/});
 if(extractCssPropIndex !== -1) {
   config.module.rules[extractCssPropIndex] = {
     test: /\.scss/,
-    use: ExtractTextPlugin.extract({
-      fallback: 'style-loader',
-      use: [
-        {loader: 'css-loader'},
-        {loader: 'sass-loader'},
-      ]
-    })
+    use: [MiniCssExtractPlugin.loader, 'css-loader', 'sass-loader']
   };
 }
 
 config.plugins = config.plugins.concat([
 
   //reduce code size
-  new webpack.optimize.UglifyJsPlugin({
-    mangle: {
-      except: ['$super', '$', 'exports', 'require', 'angular']
+  new UglifyJsPlugin({uglifyOptions: {
+    mangle: true,
+    mangleProps: {
+        reserved: ['$super', '$', 'exports', 'require', 'angular']
     },
-    compress: {
-      warnings: false,
-      screw_ie8: true,
-      conditionals: true,
-      unused: true,
-      comparisons: true,
-      sequences: true,
-      dead_code: true,
-      evaluate: true,
-      if_return: true,
-      join_vars: true,
-      collapse_vars: true,
-      reduce_vars: false
-    },
+    ie8: false,
+    keep_fnames: false,
+    warnings: false,
+    unused: true,
+    comparisons: true,
+    sequences: true,
+    dead_code: true,
+    evaluate: true,
+    if_return: true,
+    join_vars: true,
+    collapse_vars: true,
+    reduce_vars: false,
     output: {
       comments: false,
     },
-  }),
+  }}),
   new webpack.LoaderOptionsPlugin({
     minimize: true,
     debug: false
   }),
-  new ExtractTextPlugin('app.css'),
+  new MiniCssExtractPlugin({filename: 'app.css'}),
   new webpack.DefinePlugin({environment})
 ]);
+
+config.mode = "production";
 
 module.exports = config;

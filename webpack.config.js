@@ -1,9 +1,10 @@
+const path = require('path');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const ImageminPlugin = require('imagemin-webpack-plugin').default;
-
+// console.log(path.dirname(``));
 module.exports = {
-  devtool: 'sourcemap',
+  devtool: 'source-map',
   entry: {},
   module: {
     rules: [
@@ -25,14 +26,13 @@ module.exports = {
               babelrc: false,
               compact: false,
               cacheDirectory: true,
-              //presets: [
-              //  ['env', {targets: {browsers: ['last 2 versions']}}]
-              //],
-              presets: ['stage-0', ['es2015', {modules: false, loose: true}]],
+              presets: [
+               ['@babel/preset-env', {modules: false}]
+              ],
               plugins: [
-                'syntax-decorators',
+                ['@babel/plugin-syntax-decorators', {decoratorsBeforeExport: false}],
                 ['angularjs-annotate', {explicitOnly: true}],
-                'lodash'
+                ['lodash']
               ]
             }
           }
@@ -79,23 +79,23 @@ module.exports = {
     }),
 
     //copy static assets
-    new CopyWebpackPlugin([
-      {
-        context: 'client/fonts',
-        from: '**/*',
-        to: 'fonts'
-      },
-      {
-        context: 'client/img',
-        from: '**/*',
-        to: 'img'
-      },
-      {
-        context: 'node_modules/font-awesome/fonts',
-        from: '**/*',
-        to: 'fonts'
-      },
-    ]),
+    new CopyWebpackPlugin({
+        patterns:[
+            {
+                context: 'client/fonts',
+                from: '**/*',
+                to: 'fonts',
+                noErrorOnMissing: true
+            },
+            {
+                context: 'client/img',
+                from: '**/*',
+                to: 'img',
+                noErrorOnMissing: true
+            },
+
+      ]
+    }),
     new ImageminPlugin({
       test: /\.(jpe?g|png|gif|svg)$/i,
       pngquant: {
